@@ -429,86 +429,42 @@
         });
     }
 
-   function parsePattern(inputStr) {
-    if (!inputStr || !inputStr.trim()) return [''];
-    const results = [];
-    const parts = inputStr.split(',');
+    function parsePattern(inputStr) {
+        if (!inputStr || !inputStr.trim()) return [''];
+        
+        const results = [];
+        const parts = inputStr.split(',');
 
-    parts.forEach(part => {
-        part = part.trim();
-        if (part.includes('..')) {
-            const [startStr, endStr] = part.split('..').map(s => s.trim());
+        parts.forEach(part => {
+            part = part.trim();
+            if (part.includes('..')) {
+                const [startStr, endStr] = part.split('..').map(s => s.trim());
+                const startNum = Number(startStr);
+                const endNum = Number(endStr);
 
-            // 1. 숫자 범위 (00..27)
-            if (/^\d+$/.test(startStr) && /^\d+$/.test(endStr)) {
-                const startNum = parseInt(startStr, 10);
-                const endNum = parseInt(endStr, 10);
-                const padLen = Math.max(startStr.length, endStr.length);
-                const step = startNum <= endNum ? 1 : -1;
-                for (let i = startNum; startNum <= endNum ? i <= endNum : i >= endNum; i += step) {
-                    results.push(String(i).padStart(padLen, '0'));
-                }
-            } 
-            // 2. 알파벳 범위 (A..C 또는 AA..BC)
-            else if (/^[A-Za-z]+$/.test(startStr) && /^[A-Za-z]+$/.test(endStr)) {
-                const alphaToNum = (s) => {
-                    let val = 0;
-                    for (let i = 0; i < s.length; i++) {
-                        val = val * 26 + (s.toUpperCase().charCodeAt(i) - 64);
-                    }
-                    return val;
-                };
-                const numToAlpha = (n) => {
-                    let s = '';
-                    while (n > 0) {
-                        let m = (n - 1) % 26;
-                        s = String.fromCharCode(65 + m) + s;
-                        n = (n - m - 1) / 26;
-                    }
-                    return s;
-                };
-
-                const startNum = alphaToNum(startStr);
-                const endNum = alphaToNum(endStr);
-                const step = startNum <= endNum ? 1 : -1;
-
-                for (let i = startNum; startNum <= endNum ? i <= endNum : i >= endNum; i += step) {
-                    results.push(numToAlpha(i));
-                }
-            }
-            // 3. ✨ [신규] 접두사/접미사 + 숫자 범위 (예: A01..A15, CHR00..CHR05)
-            else {
-                // 문자열에서 앞부분 알파벳/문자(Prefix), 가운데 숫자(Num), 뒷부분(Suffix)을 분리
-                const matchStart = startStr.match(/^([A-Za-z_-]*)(0*\d+)([A-Za-z_-]*)$/);
-                const matchEnd = endStr.match(/^([A-Za-z_-]*)(0*\d+)([A-Za-z_-]*)$/);
-
-                if (matchStart && matchEnd && matchStart[1] === matchEnd[1] && matchStart[3] === matchEnd[3]) {
-                    const prefix = matchStart[1];
-                    const suffix = matchStart[3];
-
-                    const startNumStr = matchStart[2];
-                    const endNumStr = matchEnd[2];
-
-                    const startNum = parseInt(startNumStr, 10);
-                    const endNum = parseInt(endNumStr, 10);
-                    const padLen = Math.max(startNumStr.length, endNumStr.length);
+                if (!isNaN(startNum) && !isNaN(endNum)) {
                     const step = startNum <= endNum ? 1 : -1;
-
                     for (let i = startNum; startNum <= endNum ? i <= endNum : i >= endNum; i += step) {
-                        const numFormatted = String(i).padStart(padLen, '0');
-                        results.push(`${prefix}${numFormatted}${suffix}`);
+                        results.push(String(i));
+                    }
+                } else if (startStr.length === 1 && endStr.length === 1) {
+                    const startCode = startStr.charCodeAt(0);
+                    const endCode = endStr.charCodeAt(0);
+                    const step = startCode <= endCode ? 1 : -1;
+
+                    for (let code = startCode; startCode <= endCode ? code <= endCode : code >= endCode; code += step) {
+                        results.push(String.fromCharCode(code));
                     }
                 } else {
                     results.push(part);
                 }
+            } else if (part !== '') {
+                results.push(part);
             }
-        } else if (part !== '') {
-            results.push(part);
-        }
-    });
+        });
 
-    return results.length > 0 ? results : [''];
-}
+        return results.length > 0 ? results : [''];
+    }
 
     // 💡 이미지 사전 로드 및 404 배너 크기 즉시 판별 (메모리 로딩)
     function preloadAndValidateImage(url) {
