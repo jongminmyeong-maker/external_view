@@ -92,22 +92,22 @@
     <div class="code-inputs">
         <div class="input-group">
             <label for="charCode">캐릭터 코드</label>
-            <input type="text" id="charCode" value="A01..A05">
+            <input type="text" id="charCode" placeholder="예: A..V">
         </div>
         <div class="input-group">
             <label for="outfitCode">의상 코드</label>
-            <input type="text" id="outfitCode" value="1,2">
+            <input type="text" id="outfitCode" placeholder="예: 1,2 또는 빈칸">
         </div>
         <div class="input-group">
             <label for="situationCode">상황 코드</label>
-            <input type="text" id="situationCode" value="00..05">
+            <input type="text" id="situationCode" placeholder="예: 00..05">
         </div>
     </div>
 
     <div class="url-section">
         <div class="input-group url-input-container">
             <label for="templateUrl">템플릿 URL</label>
-            <input type="text" id="templateUrl" value="https://si-ran.com/gg/캐릭터-의상-상황.webp">
+            <input type="text" id="templateUrl" placeholder="https://example.com/캐릭터-의상-상황.webp">
         </div>
         <div class="button-group">
             <button class="btn-share" onclick="copyShareUrl()">🔗 URL 공유</button>
@@ -175,12 +175,17 @@
 
     window.addEventListener('DOMContentLoaded', () => {
         const params = new URLSearchParams(window.location.search);
-        if (params.has('char')) document.getElementById('charCode').value = params.get('char');
-        if (params.has('outfit')) document.getElementById('outfitCode').value = params.get('outfit');
-        if (params.has('sit')) document.getElementById('situationCode').value = params.get('sit');
-        if (params.has('url')) document.getElementById('templateUrl').value = params.get('url');
-
-        if (params.has('char') || params.has('url')) {
+        
+        // 파라미터가 없을 때 기본적으로 /preview 경로 설정 및 빈칸 유지
+        if (!params.has('char') && !params.has('url')) {
+            if (!window.location.pathname.includes('/preview')) {
+                window.history.replaceState({}, '', '/preview' + window.location.search);
+            }
+        } else {
+            if (params.has('char')) document.getElementById('charCode').value = params.get('char');
+            if (params.has('outfit')) document.getElementById('outfitCode').value = params.get('outfit');
+            if (params.has('sit')) document.getElementById('situationCode').value = params.get('sit');
+            if (params.has('url')) document.getElementById('templateUrl').value = params.get('url');
             generateList();
         }
     });
@@ -281,6 +286,11 @@
         const outfitInput = document.getElementById('outfitCode').value;
         const situationInput = document.getElementById('situationCode').value;
         const templateUrl = document.getElementById('templateUrl').value;
+
+        if (!templateUrl.trim()) {
+            alert('템플릿 URL을 입력해주세요.');
+            return;
+        }
 
         const gallery = document.getElementById('gallery');
         const chars = parsePattern(charInput);
@@ -393,7 +403,6 @@
         modal.style.display = 'flex';
     }
 
-    /* 💡 개별 이미지 URL 복사 함수 */
     function copySingleUrl(url) {
         navigator.clipboard.writeText(url).then(() => {
             alert('이미지 URL이 클립보드에 복사되었습니다!\n' + url);
@@ -443,7 +452,7 @@
         const sit = encodeURIComponent(document.getElementById('situationCode').value);
         const url = encodeURIComponent(document.getElementById('templateUrl').value);
 
-        const shareUrl = `${window.location.origin}${window.location.pathname}?char=${char}&outfit=${outfit}&sit=${sit}&url=${url}`;
+        const shareUrl = `${window.location.origin}/preview?char=${char}&outfit=${outfit}&sit=${sit}&url=${url}`;
         
         navigator.clipboard.writeText(shareUrl).then(() => {
             alert('공유 URL이 클립보드에 복사되었습니다!');
@@ -458,7 +467,7 @@
         const sit = document.getElementById('situationCode').value;
         const url = document.getElementById('templateUrl').value;
 
-        const shareUrl = `${window.location.origin}${window.location.pathname}?char=${encodeURIComponent(char)}&outfit=${encodeURIComponent(outfit)}&sit=${encodeURIComponent(sit)}&url=${encodeURIComponent(url)}`;
+        const shareUrl = `${window.location.origin}/preview?char=${encodeURIComponent(char)}&outfit=${encodeURIComponent(outfit)}&sit=${encodeURIComponent(sit)}&url=${encodeURIComponent(url)}`;
 
         const htmlContent = `[InternetShortcut]\nURL=${shareUrl}`;
         const blob = new Blob([htmlContent], { type: 'text/plain' });
