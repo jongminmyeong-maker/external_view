@@ -2,54 +2,89 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>캐릭터챗 외부이미지 미리보기</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #12181f; color: #e2e8f0; padding: 2rem 1.5rem; min-height: 100vh; display: flex; flex-direction: column; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #12181f; color: #e2e8f0; padding: 1.5rem 1rem; min-height: 100vh; display: flex; flex-direction: column; }
         .main-container { max-width: 1100px; width: 100%; margin: 0 auto; flex: 1; }
-        h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 1.5rem; color: #ffffff; }
-        .code-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
+        h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.2rem; color: #ffffff; text-align: center; }
+        
+        /* 입력 영역 반응형 */
+        .code-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 0.8rem; }
         .input-group { display: flex; flex-direction: column; gap: 6px; }
-        label { font-size: 0.85rem; color: #94a3b8; }
-        input[type="text"] { width: 100%; padding: 10px 14px; background-color: #1e293b; border: 1px solid #334155; border-radius: 6px; color: #ffffff; font-size: 0.95rem; outline: none; }
-        .url-section { display: flex; gap: 12px; align-items: flex-end; margin-bottom: 1rem; }
-        .url-input-container { flex: 1; }
-        .button-group { display: flex; gap: 8px; }
-        button { padding: 10px 18px; border-radius: 6px; font-size: 0.9rem; font-weight: 600; border: none; cursor: pointer; white-space: nowrap; }
+        label { font-size: 0.8rem; color: #94a3b8; font-weight: 600; }
+        input[type="text"] { width: 100%; padding: 10px 12px; background-color: #1e293b; border: 1px solid #334155; border-radius: 6px; color: #ffffff; font-size: 0.9rem; outline: none; }
+        input[type="text"]:focus { border-color: #38bdf8; }
+
+        .url-section { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 1rem; flex-wrap: wrap; }
+        .url-input-container { flex: 1; min-width: 250px; }
+        .button-group { display: flex; gap: 6px; width: auto; }
+        button { padding: 10px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; border: none; cursor: pointer; white-space: nowrap; flex: 1; }
         .btn-share { background-color: #334155; color: #ffffff; }
         .btn-shortcut { background-color: #64748b; color: #ffffff; }
         .btn-generate { background-color: #007bff; color: #ffffff; }
-        .summary-bar { display: flex; background-color: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 10px 16px; margin-bottom: 1.5rem; font-size: 0.9rem; color: #94a3b8; justify-content: space-between; align-items: center; }
+
+        /* 요약 바 모바일 정렬 */
+        .summary-bar { display: flex; background-color: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 10px 14px; margin-bottom: 1.2rem; font-size: 0.85rem; color: #94a3b8; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
         .summary-bar span strong { color: #38bdf8; }
         .summary-bar .invalid-count { color: #f87171; cursor: pointer; text-decoration: underline; }
-        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+
+        /* 그리드 카드 모바일 반응형 */
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
         .char-card { background-color: #1e293b; border-radius: 8px; overflow: hidden; border: 1px solid #334155; cursor: pointer; display: flex; flex-direction: column; }
-        .img-wrapper { width: 100%; height: 260px; background-color: #0b0f17; display: flex; align-items: center; justify-content: center; padding: 6px; position: relative; }
+        .img-wrapper { width: 100%; height: 200px; background-color: #0b0f17; display: flex; align-items: center; justify-content: center; padding: 6px; position: relative; }
         .img-wrapper img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px; }
-        .char-card-info { padding: 12px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
-        .char-card-title { color: #38bdf8; font-size: 1.1rem; font-weight: bold; }
-        .char-card-badge { display: inline-block; background-color: #0f172a; color: #94a3b8; font-size: 0.75rem; padding: 3px 8px; border-radius: 4px; }
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px); justify-content: center; align-items: center; }
-        .modal-content { background-color: #162447; padding: 2rem; border-radius: 16px; width: 90%; max-width: 1050px; max-height: 85vh; overflow-y: auto; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #1f4068; padding-bottom: 0.8rem; }
-        .modal-title { font-size: 1.3rem; color: #38bdf8; font-weight: bold; }
-        .close-btn { font-size: 1.8rem; color: #cbd5e1; cursor: pointer; border: none; background: none; }
-        .modal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+        .char-card-info { padding: 10px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 4px; }
+        .char-card-title { color: #38bdf8; font-size: 0.95rem; font-weight: bold; }
+        .char-card-badge { display: inline-block; background-color: #0f172a; color: #94a3b8; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; align-self: flex-start; }
+
+        /* 모달 반응형 */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px); justify-content: center; align-items: center; padding: 12px; }
+        .modal-content { background-color: #162447; padding: 1.2rem; border-radius: 12px; width: 100%; max-width: 1050px; max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #1f4068; padding-bottom: 0.6rem; }
+        .modal-title { font-size: 1.1rem; color: #38bdf8; font-weight: bold; }
+        .close-btn { font-size: 1.5rem; color: #cbd5e1; cursor: pointer; border: none; background: none; padding: 0 4px; }
+        .modal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
         .modal-card { background-color: #0f172a; border-radius: 8px; overflow: hidden; border: 1px solid #1f4068; }
-        .modal-card .img-wrapper { height: 220px; }
-        .modal-card-info { padding: 8px 10px; font-size: 0.75rem; color: #94a3b8; word-break: break-all; }
-        .zoom-modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.92); justify-content: center; align-items: center; }
-        .zoom-modal img { max-width: 90vw; max-height: 90vh; object-fit: contain; }
-        .zoom-close-btn { position: absolute; top: 20px; right: 25px; font-size: 2.5rem; color: #ffffff; cursor: pointer; }
-        
-        /* 🚨 오류 목록 전용 스타일 */
-        .invalid-list-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
-        .invalid-list-table th, .invalid-list-table td { padding: 8px 12px; border: 1px solid #1f4068; text-align: left; }
+        .modal-card .img-wrapper { height: 170px; }
+        .modal-card-info { padding: 8px; font-size: 0.7rem; color: #94a3b8; word-break: break-all; }
+
+        /* 이미지 확대 반응형 모달 */
+        .zoom-modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.95); justify-content: center; align-items: center; }
+        .zoom-modal img { max-width: 95vw; max-height: 85vh; object-fit: contain; }
+        .zoom-close-btn { position: absolute; top: 15px; right: 20px; font-size: 2rem; color: #ffffff; cursor: pointer; }
+
+        /* 오류 모달 전용 표 모바일 스크롤 처리 */
+        #invalidContainer { width: 100%; overflow-x: auto; }
+        .invalid-list-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.75rem; min-width: 480px; }
+        .invalid-list-table th, .invalid-list-table td { padding: 6px 8px; border: 1px solid #1f4068; text-align: left; }
         .invalid-list-table th { background-color: #0f172a; color: #f87171; }
         .invalid-list-table tr:nth-child(even) { background-color: #111d33; }
         .invalid-url-text { word-break: break-all; color: #cbd5e1; font-family: monospace; }
-        .btn-copy-invalid { background-color: #dc2626; color: #fff; padding: 6px 12px; font-size: 0.8rem; margin-bottom: 12px; }
+        .btn-copy-invalid { background-color: #dc2626; color: #fff; padding: 8px 12px; font-size: 0.8rem; margin-bottom: 8px; width: 100%; }
+
+        /* 📱 미디어 쿼리 (모바일 화면) */
+        @media (max-width: 768px) {
+            body { padding: 1rem 0.8rem; }
+            h1 { font-size: 1.3rem; margin-bottom: 1rem; }
+            .code-inputs { grid-template-columns: 1fr; gap: 8px; }
+            .url-section { flex-direction: column; align-items: stretch; gap: 8px; }
+            .button-group { width: 100%; justify-content: space-between; }
+            .summary-bar { flex-direction: column; align-items: flex-start; gap: 4px; }
+            .gallery-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .img-wrapper { height: 180px; }
+            .modal-content { padding: 1rem; }
+            .modal-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .modal-card .img-wrapper { height: 150px; }
+        }
+
+        @media (max-width: 400px) {
+            .gallery-grid { grid-template-columns: 1fr; }
+            .modal-grid { grid-template-columns: 1fr; }
+            .img-wrapper { height: 220px; }
+            .modal-card .img-wrapper { height: 200px; }
+        }
     </style>
 </head>
 <body>
@@ -78,8 +113,8 @@
             <input type="text" id="templateUrl" value="https://si-ran.com/gg/캐릭터-의상-상황.webp">
         </div>
         <div class="button-group">
-            <button class="btn-share" onclick="copyShareUrl()">🔗 URL 공유</button>
-            <button class="btn-shortcut" onclick="downloadFileList()">↓ 바로가기 파일</button>
+            <button class="btn-share" onclick="copyShareUrl()">🔗 공유</button>
+            <button class="btn-shortcut" onclick="downloadFileList()">↓ 바로가기</button>
             <button class="btn-generate" onclick="generateList()">☰ 목록생성</button>
         </div>
     </div>
@@ -104,7 +139,7 @@
     </div>
 </div>
 
-<!-- 🚨 제외된/오류 URL 전용 모달 -->
+<!-- 제외된/오류 URL 전용 모달 -->
 <div class="modal" id="invalidModal">
     <div class="modal-content">
         <div class="modal-header">
@@ -116,9 +151,9 @@
             <table class="invalid-list-table">
                 <thead>
                     <tr>
-                        <th style="width: 15%;">캐릭터/의상/상황</th>
-                        <th style="width: 20%;">사유</th>
-                        <th style="width: 65%;">URL</th>
+                        <th style="width: 25%;">캐릭터/의상/상황</th>
+                        <th style="width: 25%;">사유</th>
+                        <th style="width: 50%;">URL</th>
                     </tr>
                 </thead>
                 <tbody id="invalidTableBody"></tbody>
@@ -135,9 +170,8 @@
 <script>
     let globalCharData = {};
     let orderedCharList = [];
-    let invalidImgList = []; // 🚨 제외된 URL을 수집하는 배열
+    let invalidImgList = [];
 
-    // 🎯 오류 배너 크기 (300x150) 차단 목록
     const ERROR_BANNER_SIZES = [
         [300, 150]
     ];
@@ -220,7 +254,6 @@
         return results.length > 0 ? results : [''];
     }
 
-    // 🎯 검사 시 사유(reason)까지 리턴하도록 개선
     function preloadAndValidateImage(url) {
         return new Promise((resolve) => {
             const img = new Image();
@@ -258,9 +291,9 @@
         const situations = parsePattern(situationInput);
 
         orderedCharList = chars.filter(c => c !== '');
-        gallery.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #38bdf8; padding: 3rem;">유효성 검사 중입니다...</div>'; 
+        gallery.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #38bdf8; padding: 2rem;">유효성 검사 중입니다...</div>'; 
         globalCharData = {};
-        invalidImgList = []; // 🚨 초기에 오류 목록 리셋
+        invalidImgList = [];
 
         const BATCH_SIZE = 20;
         let totalValidImgCount = 0;
@@ -286,7 +319,6 @@
                         if (res.isValid) {
                             return { ...task, width: res.width, height: res.height };
                         } else {
-                            // 🚨 오류 이미지 목록에 기록
                             invalidImgList.push({ ...task, reason: res.reason });
                             return null;
                         }
@@ -333,11 +365,10 @@
         });
 
         if (!hasValidChar) {
-            gallery.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 3rem;">유효한 이미지가 없습니다.</div>';
+            gallery.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 2rem;">유효한 이미지가 없습니다.</div>';
         }
     }
 
-    // 🚨 오류 모달 열기 함수
     function openInvalidModal() {
         const modal = document.getElementById('invalidModal');
         const tbody = document.getElementById('invalidTableBody');
@@ -360,7 +391,6 @@
         modal.style.display = 'flex';
     }
 
-    // 🚨 오류 URL 텍스트 전체 복사
     function copyInvalidUrls() {
         if (invalidImgList.length === 0) {
             alert('복사할 오류 URL이 없습니다.');
