@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>캐릭터챗 외부이미지 미리보기</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #12181f;
+            color: #e2e8f0;
+            padding: 2rem 1.5rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-container {
+            max-width: 1100px;
+            width: 100%;
+            margin: 0 auto;
+            flex: 1;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #ffffff;
+        }
+
+        .code-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px 14px;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: #007bff;
+        }
+
+        .url-section {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        .url-input-container {
+            flex: 1;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        button {
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .btn-share {
+            background-color: #334155;
+            color: #ffffff;
+        }
+
+        .btn-shortcut {
+            background-color: #64748b;
+            color: #ffffff;
+        }
+
+        .btn-generate {
+            background-color: #007bff;
+            color: #ffffff;
+        }
+
+        .summary-bar {
+            display: none;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 10px 16px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            color: #94a3b8;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .summary-bar span strong {
+            color: #38bdf8;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .char-card {
+            background-color: #1e293b;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #334155;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .char-card:hover {
+            transform: translateY(-4px);
+            border-color: #007bff;
+        }
+
+        .img-wrapper {
+            width: 100%;
+            height: 260px;
+            background-color: #0b0f17;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px;
+        }
+
+        .img-wrapper img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            display: block;
+            border-radius: 4px;
+        }
+
+        .char-card-info {
+            padding: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background-color: #1e293b;
+        }
+
+        .char-card-title {
+            color: #38bdf8;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .char-card-badge {
+            display: inline-block;
+            background-color: #0f172a;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #162447;
+            padding: 2rem;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 1050px;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid #1f4068;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            color: #38bdf8;
+            font-weight: bold;
+        }
+
+        .close-btn {
+            font-size: 1.8rem;
+            color: #cbd5e1;
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+
+        .modal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .modal-card {
+            background-color: #0f172a;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #1f4068;
+        }
+
+        .modal-card .img-wrapper {
+            height: 220px;
+            cursor: zoom-in;
+        }
+
+        .modal-card-info {
+            padding: 8px 10px;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            word-break: break-all;
+        }
+
+        .zoom-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(8px);
+            justify-content: center;
+            align-items: center;
+            cursor: zoom-out;
+        }
+
+        .zoom-modal img {
+            max-width: 90vw;
+            max-height: 90vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
+        }
+
+        .zoom-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            font-size: 2.5rem;
+            color: #ffffff;
+            cursor: pointer;
+            z-index: 2001;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #1e293b;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        footer a { color: #38bdf8; text-decoration: none; }
+
+        @media (max-width: 768px) {
+            .code-inputs { grid-template-columns: 1fr; }
+            .url-section { flex-direction: column; align-items: stretch; }
+            .modal-content { padding: 1.2rem; max-height: 80vh; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <h1>캐릭터챗 외부이미지 미리보기</h1>
+
+    <!-- 1. 코드 입력란 -->
+    <div class="code-inputs">
+        <div class="input-group">
+            <label for="charCode">캐릭터 코드</label>
+            <input type="text" id="charCode" value="a..f" placeholder="예: a..f">
+        </div>
+        <div class="input-group">
+            <label for="outfitCode">의상 코드 (없으면 빈칸)</label>
+            <input type="text" id="outfitCode" value="1,2" placeholder="예: 1,2">
+        </div>
+        <div class="input-group">
+            <label for="situationCode">상황 코드</label>
+            <input type="text" id="situationCode" value="0..61,100..114" placeholder="예: 1,3..11">
+        </div>
+    </div>
+
+    <!-- 2. 템플릿 URL 및 버튼 -->
+    <div class="url-section">
+        <div class="input-group url-input-container">
+            <label for="templateUrl">템플릿 URL (키워드: 캐릭터, 의상, 상황)</label>
+            <input type="text" id="templateUrl" value="https://si-ran.com/gg/캐릭터-의상-상황.webp">
+        </div>
+        <div class="button-group">
+            <button class="btn-share" onclick="copyShareUrl()" title="현재 입력 상태가 포함된 링크 복사">🔗 URL 공유</button>
+            <button class="btn-shortcut" onclick="downloadFileList()">↓ 바로가기 파일</button>
+            <button class="btn-generate" onclick="generateList()">☰ 목록생성</button>
+        </div>
+    </div>
+
+    <!-- 요약 안내 바 -->
+    <div class="summary-bar" id="summaryBar">
+        <span>검색 캐릭터: <strong id="totalCharCount">0</strong>명</span>
+        <span>실제 유효 이미지: <strong id="totalImgCount">0</strong>장</span>
+    </div>
+
+    <!-- 3. 캐릭터 목록 영역 -->
+    <div class="gallery-grid" id="gallery"></div>
+</div>
+
+<!-- 4. 상세 모달 -->
+<div class="modal" id="detailModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title" id="modalTitle">캐릭터 전체 미리보기</div>
+            <button class="close-btn" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-grid" id="modalGrid"></div>
+    </div>
+</div>
+
+<!-- 5. 원본 확대 모달 -->
+<div class="zoom-modal" id="zoomModal" onclick="closeZoomModal()">
+    <span class="zoom-close-btn" onclick="closeZoomModal()">&times;</span>
+    <img id="zoomImg" src="" alt="확대 이미지">
+</div>
+
+<footer>
+    사이트 개발: 시란 (새벽제작) | <a href="#">이용 가이드</a>
+</footer>
+
+<script>
+    let globalCharData = {};
+
+    // 🔗 1. URL 쿼리 파라미터를 읽어와서 input 값 세팅하기
+    function loadQueryParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        if (urlParams.has('char')) document.getElementById('charCode').value = urlParams.get('char');
+        if (urlParams.has('outfit')) document.getElementById('outfitCode').value = urlParams.get('outfit');
+        if (urlParams.has('situation')) document.getElementById('situationCode').value = urlParams.get('situation');
+        if (urlParams.has('url')) document.getElementById('templateUrl').value = urlParams.get('url');
+    }
+
+    // 🔗 2. 현재 입력값을 URL 쿼리로 업데이트하기 (새로고침 없이 주소 변경)
+    function updateQueryParams(char, outfit, situation, templateUrl) {
+        const params = new URLSearchParams();
+        params.set('char', char);
+        params.set('outfit', outfit);
+        params.set('situation', situation);
+        params.set('url', templateUrl);
+
+        const newUrl = `${window.location.pathname}?${params.toString()}`;
+        window.history.replaceState({}, '', newUrl); // 주소창 업데이트
+    }
+
+    // 🔗 3. 공유 가능한 URL 클립보드 복사
+    function copyShareUrl() {
+        const currentUrl = window.location.href;
+        navigator.clipboard.writeText(currentUrl).then(() => {
+            alert('현재 검색 상태가 저장된 URL 링크가 복사되었습니다!');
+        }).catch(err => {
+            alert('URL 복사에 실패했습니다. 주소창의 링크를 직접 복사해주세요.');
+        });
+    }
+
+    function parsePattern(inputStr) {
+        if (!inputStr || !inputStr.trim()) return [''];
+        
+        const results = [];
+        const parts = inputStr.split(',');
+
+        parts.forEach(part => {
+            part = part.trim();
+            if (part.includes('..')) {
+                const [startStr, endStr] = part.split('..').map(s => s.trim());
+                const startNum = Number(startStr);
+                const endNum = Number(endStr);
+
+                if (!isNaN(startNum) && !isNaN(endNum)) {
+                    const step = startNum <= endNum ? 1 : -1;
+                    for (let i = startNum; startNum <= endNum ? i <= endNum : i >= endNum; i += step) {
+                        results.push(String(i));
+                    }
+                } else if (startStr.length === 1 && endStr.length === 1) {
+                    const startCode = startStr.charCodeAt(0);
+                    const endCode = endStr.charCodeAt(0);
+                    const step = startCode <= endCode ? 1 : -1;
+
+                    for (let code = startCode; startCode <= endCode ? code <= endCode : code >= endCode; code += step) {
+                        results.push(String.fromCharCode(code));
+                    }
+                } else {
+                    results.push(part);
+                }
+            } else if (part !== '') {
+                results.push(part);
+            }
+        });
+
+        return results.length > 0 ? results : [''];
+    }
+
+    // 💡 이미지 사전 로드 및 404 배너 크기 즉시 판별 (메모리 로딩)
+    function preloadAndValidateImage(url) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                const w = img.naturalWidth;
+                const h = img.naturalHeight;
+                // 404 배너 크기 조건 (가로 800 미만 또는 세로 400 미만시 제외)
+                if (w < 800 || h < 400) {
+                    resolve(false);
+                } else {
+                    resolve(true);
+                }
+            };
+            img.onerror = () => resolve(false);
+            img.src = url;
+        });
+    }
+
+    function handleImgLoad(imgElement, charCode, url, isMain = false) {
+        const w = imgElement.naturalWidth;
+        const h = imgElement.naturalHeight;
+
+        if (w < 800 || h < 400) {
+            hideInvalidCard(imgElement, charCode, url, isMain);
+        }
+    }
+
+    function handleImgError(imgElement, charCode, url, isMain = false) {
+        hideInvalidCard(imgElement, charCode, url, isMain);
+    }
+
+    function hideInvalidCard(imgElement, charCode, url, isMain) {
+        if (globalCharData[charCode]) {
+            globalCharData[charCode] = globalCharData[charCode].filter(item => item.url !== url);
+        }
+
+        if (isMain) {
+            if (globalCharData[charCode] && globalCharData[charCode].length > 0) {
+                const nextItem = globalCharData[charCode][0];
+                imgElement.src = nextItem.url;
+            } else {
+                const card = imgElement.closest('.char-card');
+                if (card) card.style.display = 'none';
+                delete globalCharData[charCode];
+            }
+        } else {
+            const card = imgElement.closest('.modal-card');
+            if (card) card.style.display = 'none';
+        }
+
+        updateCharCardBadge(charCode);
+        updateSummaryCount();
+    }
+
+    function updateCharCardBadge(charCode) {
+        const badgeElem = document.getElementById(`badge-${charCode}`);
+        if (globalCharData[charCode] && badgeElem) {
+            badgeElem.innerText = `유효 이미지: ${globalCharData[charCode].length}장`;
+        }
+    }
+
+    function updateSummaryCount() {
+        const activeChars = Object.keys(globalCharData).filter(c => globalCharData[c] && globalCharData[c].length > 0);
+        let validTotalImgCount = 0;
+        activeChars.forEach(c => {
+            validTotalImgCount += globalCharData[c].length;
+        });
+
+        document.getElementById('totalCharCount').innerText = activeChars.length;
+        document.getElementById('totalImgCount').innerText = validTotalImgCount;
+    }
+
+    async function generateList() {
+        const charInput = document.getElementById('charCode').value;
+        const outfitInput = document.getElementById('outfitCode').value;
+        const situationInput = document.getElementById('situationCode').value;
+        const templateUrl = document.getElementById('templateUrl').value;
+
+        // 💡 쿼리 파라미터 주소 업데이트
+        updateQueryParams(charInput, outfitInput, situationInput, templateUrl);
+
+        const summaryBar = document.getElementById('summaryBar');
+        const gallery = document.getElementById('gallery');
+
+        const chars = parsePattern(charInput);
+        const outfits = parsePattern(outfitInput);
+        const situations = parsePattern(situationInput);
+
+        gallery.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #38bdf8; padding: 3rem;">유효성 검사 중입니다. 잠시만 기다려주세요...</div>'; 
+        globalCharData = {};
+
+        for (const c of chars) {
+            if (!c) continue;
+            globalCharData[c] = [];
+
+            const validatePromises = [];
+
+            for (const o of outfits) {
+                for (const s of situations) {
+                    let finalUrl = templateUrl.replace(/캐릭터/g, c);
+                    if (o === '') {
+                        finalUrl = finalUrl.replace(/-의상/g, '').replace(/의상-/g, '').replace(/의상/g, '');
+                    } else {
+                        finalUrl = finalUrl.replace(/의상/g, o);
+                    }
+                    finalUrl = finalUrl.replace(/상황/g, s);
+
+                    validatePromises.push(
+                        preloadAndValidateImage(finalUrl).then(isValid => {
+                            if (isValid) {
+                                globalCharData[c].push({ outfit: o, situation: s, url: finalUrl });
+                            }
+                        })
+                    );
+                }
+            }
+
+            await Promise.all(validatePromises);
+        }
+
+        gallery.innerHTML = '';
+
+        const activeChars = Object.keys(globalCharData).filter(c => globalCharData[c].length > 0);
+
+        if (activeChars.length === 0) {
+            gallery.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 3rem;">유효한 이미지가 없습니다.</div>';
+            summaryBar.style.display = 'none';
+            return;
+        }
+
+        activeChars.forEach(c => {
+            const validItems = globalCharData[c];
+            const firstItem = validItems[0];
+            const validCount = validItems.length;
+
+            const card = document.createElement('div');
+            card.className = 'char-card';
+            card.onclick = () => openModal(c);
+            
+            card.innerHTML = `
+                <div class="img-wrapper">
+                    <img src="${firstItem.url}" alt="${c}" 
+                         onload="handleImgLoad(this, '${c}', '${firstItem.url}', true)"
+                         onerror="handleImgError(this, '${c}', '${firstItem.url}', true)">
+                </div>
+                <div class="char-card-info">
+                    <div>
+                        <div class="char-card-title">캐릭터: ${c}</div>
+                        <div class="char-card-badge" id="badge-${c}">유효 이미지: ${validCount}장</div>
+                    </div>
+                    <div style="font-size:0.75rem; color:#38bdf8; margin-top:8px; font-weight:600;">전체 보기 ➔</div>
+                </div>
+            `;
+            gallery.appendChild(card);
+        });
+
+        summaryBar.style.display = 'flex';
+        updateSummaryCount();
+    }
+
+    function openModal(char) {
+        const modal = document.getElementById('detailModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalGrid = document.getElementById('modalGrid');
+
+        const items = globalCharData[char] || [];
+        modalTitle.innerText = `캐릭터 [ ${char} ] - 미리보기 (클릭 시 확대)`;
+        modalGrid.innerHTML = '';
+
+        items.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'modal-card';
+            
+            card.innerHTML = `
+                <div class="img-wrapper" onclick="openZoomModal('${item.url}')">
+                    <img src="${item.url}" alt="${char}" 
+                         onload="handleImgLoad(this, '${char}', '${item.url}', false)"
+                         onerror="handleImgError(this, '${char}', '${item.url}', false)">
+                </div>
+                <div class="modal-card-info">
+                    <div style="color:#38bdf8; font-weight:bold;">의상: ${item.outfit || '없음'} / 상황: ${item.situation}</div>
+                    <div style="font-size:0.7rem; color:#64748b;">${item.url}</div>
+                </div>
+            `;
+            modalGrid.appendChild(card);
+        });
+
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        document.getElementById('detailModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    function openZoomModal(url) {
+        const zoomModal = document.getElementById('zoomModal');
+        const zoomImg = document.getElementById('zoomImg');
+        zoomImg.src = url;
+        zoomModal.style.display = 'flex';
+    }
+
+    function closeZoomModal() {
+        document.getElementById('zoomModal').style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+        const modal = document.getElementById('detailModal');
+        if (event.target === modal) {
+            closeModal();
+        }
+    }
+
+    function downloadFileList() {
+        let urlList = [];
+        Object.keys(globalCharData).forEach(c => {
+            if(globalCharData[c]) {
+                globalCharData[c].forEach(item => {
+                    urlList.push(item.url);
+                });
+            }
+        });
+
+        if (urlList.length === 0) {
+            alert('다운로드할 유효한 이미지 주소가 없습니다.');
+            return;
+        }
+
+        const blob = new Blob([urlList.join('\n')], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'valid_image_urls.txt';
+        a.click();
+    }
+
+    // 💡 페이지 로드 시 쿼리 파라미터를 먼저 읽어오고 목록 자동생성
+    window.onload = () => {
+        loadQueryParams();
+        generateList();
+    };
+</script>
+
+</body>
+</html>
